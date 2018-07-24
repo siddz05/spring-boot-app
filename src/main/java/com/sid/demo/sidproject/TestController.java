@@ -93,13 +93,18 @@ public class TestController {
 			a.put("Unique_Models_Group", modelGroups);
 			a.put("Unique_Models", onlyModels);
 		} catch (
-
 		FileNotFoundException e) {
 			e.printStackTrace();
+			a.put("Error", "Some Error Occured! " + e);
+			return a;
 		} catch (IOException | ParseException e) {
 			e.printStackTrace();
+			a.put("Error", "Some Error Occured! " + e);
+			return a;
 		} catch (Exception e) {
 			e.printStackTrace();
+			a.put("Error", "Some Error Occured! " + e);
+			return a;
 		}
 
 		return a;
