@@ -1,0 +1,126 @@
+package com.sid.demo.sidproject;
+
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.Reader;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/test")
+public class TestController {
+
+	@RequestMapping("/")
+	@ResponseBody
+	String root() {
+		return "ROot Test!! ~Sid";
+	}
+
+	@RequestMapping("/hi")
+	@ResponseBody
+	String hi() {
+		Map<Object, Object> a = new HashMap<>();
+		return "Hello Hi";
+	}
+
+	@RequestMapping("/map")
+	@ResponseBody
+	Map<Object, Object> map(@RequestParam(required = false, value = "p") Object p) {
+		Map<Object, Object> a = new HashMap<>();
+		System.out.println("p");
+		a.put("p", p);
+		a.put("sid", "sss");
+		return a;
+	}
+
+	@RequestMapping("/path/{id}")
+	@ResponseBody
+	Map<Object, Object> pathVariable(@RequestParam(required = false, value = "p") Object p, @PathVariable Long id) {
+		Map<Object, Object> a = new HashMap<>();
+		System.out.println("p");
+		a.put("p", p);
+		a.put("PathVariable", id);
+		a.put("sid", "sss");
+		return a;
+	}
+
+	@RequestMapping("/modelsTimeoutList")
+	@ResponseBody
+	Map<Object, Object> modelsTimeoutList(@RequestParam(required = false, value = "filePath") String filePath) {
+		Map<Object, Object> a = new HashMap<>();
+		Set<String> modelGroups = new HashSet<>();
+		Set<String> onlyModels = new HashSet<>();
+		List<String> allModels = new LinkedList<>();
+		JSONParser parser = getJsonParserInstance();
+		try {
+			FileReader fileReader = getFileReaderInstance(filePath);
+			BufferedReader bufferReader = getBufferReaderInstance(fileReader);
+			Object line;
+			while ((line = bufferReader.readLine()) != null) {
+				try {
+					String myJson = line.toString().split("ERROR")[1];
+					Object simpleObj = parser.parse(myJson);
+					JSONObject parserObj = (JSONObject) simpleObj;
+					String allModelsGroup = parserObj.get("model").toString();
+					modelGroups.add(allModelsGroup);
+					System.out.println(parserObj);
+				} catch (Exception e) {
+				}
+
+			}
+			for (String models : modelGroups) {
+				for (String model : models.split(",")) {
+					allModels.add(model.trim());
+					onlyModels.add(model.trim());
+				}
+			}
+			a.put("All_Models", allModels);
+			a.put("Unique_Models_Group", modelGroups);
+			a.put("Unique_Models", onlyModels);
+		} catch (
+
+		FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException | ParseException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return a;
+	}
+
+	private BufferedReader getBufferReaderInstance(Object reader) throws Exception {
+		if (reader instanceof FileReader) {
+			return new BufferedReader((Reader) reader);
+		} else {
+			throw new Exception("Unspoorted Type reader!");
+		}
+
+	}
+
+	private JSONParser getJsonParserInstance() {
+		return new JSONParser();
+
+	}
+
+	private FileReader getFileReaderInstance(String filePath) throws FileNotFoundException {
+		FileReader reader = new FileReader(filePath);
+		return reader;
+	}
+}
