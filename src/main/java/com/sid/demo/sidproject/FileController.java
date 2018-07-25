@@ -1,8 +1,9 @@
 package com.sid.demo.sidproject;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URI;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -10,6 +11,13 @@ import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
+
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -94,6 +102,38 @@ public class FileController {
 		return finalMap;
 	}
 
+	/**
+	 * @param file    -- Path Of File Needed To Be Downloaded
+	 * @param request
+	 * @return Stream The File On Browser
+	 */
+	@RequestMapping(value = "/download", method = RequestMethod.GET)
+	@ResponseBody
+	ResponseEntity<Resource> downloadFile(@RequestParam("file") String file, HttpServletRequest request) {
+		String contentType = null;
+		Resource resource = null;
+		try {
+			resource = loadFileAsResource(file);
+			// Try to determine file's content type
+			try {
+				contentType = request.getServletContext().getMimeType(resource.getFile().getAbsolutePath());
+			} catch (IOException ex) {
+				ex.printStackTrace();
+			}
+
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+		// Fallback to the default content type if type could not be determined
+		if (contentType == null) {
+			contentType = "application/octet-stream";
+		}
+
+		return ResponseEntity.ok().contentType(MediaType.parseMediaType(contentType))
+				.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
+				.body(resource);
+	}
+
 	/*
 	 * Methods Below This Line
 	 * 
@@ -135,5 +175,28 @@ public class FileController {
 	 */
 	private String getHomeDir() {
 		return System.getProperty("user.home");
+	}
+
+	private Path getPathValue(String home, String absFilePath) {
+		return Paths.get(home, absFilePath);
+	}
+
+	/**
+	 * @param fileName
+	 * @return A Resource Type Object Of A Given File
+	 * @throws FileNotFoundException
+	 */
+	public Resource loadFileAsResource(String fileName) throws FileNotFoundException {
+		try {
+			Path filePath = getPathValue(getHomeDir(), fileName).normalize();
+			Resource resource = new UrlResource(filePath.toUri());
+			if (resource.exists()) {
+				return resource;
+			} else {
+				throw new FileNotFoundException();
+			}
+		} catch (MalformedURLException ex) {
+			throw new FileNotFoundException("File not found " + fileName);
+		}
 	}
 }
