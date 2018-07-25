@@ -2,12 +2,16 @@ package com.sid.demo.sidproject;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.sid.demo.config.FileStorageProperties;
+
 @Controller
 @SpringBootApplication
+@EnableConfigurationProperties({ FileStorageProperties.class })
 public class SidprojectApplication {
 
 	@RequestMapping("/a")
