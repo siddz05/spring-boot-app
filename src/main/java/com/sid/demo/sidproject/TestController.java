@@ -89,7 +89,7 @@ public class TestController {
 					onlyModels.add(model.trim());
 				}
 			}
-			a.put("All_Models", allModels);
+			a.put("All_Models", allModels.size() > 50 ? "Too Many Models":allModels);
 			a.put("Unique_Models_Group", modelGroups);
 			a.put("Unique_Models", onlyModels);
 		} catch (
