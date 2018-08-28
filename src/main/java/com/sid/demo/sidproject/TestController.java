@@ -5,6 +5,8 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -20,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/test")
@@ -61,7 +64,8 @@ public class TestController {
 
 	@RequestMapping("/modelsTimeoutList")
 	@ResponseBody
-	Map<Object, Object> modelsTimeoutList(@RequestParam(required = false, value = "filePath") String filePath) {
+	Map<Object, Object> modelsTimeoutList(@RequestParam(required = false, value = "filePath") String filePath,
+			@RequestParam(value="file",required = false) MultipartFile file) {
 		Map<Object, Object> a = new HashMap<>();
 		Set<String> modelGroups = new HashSet<>();
 		Set<String> onlyModels = new HashSet<>();
@@ -71,14 +75,22 @@ public class TestController {
 			FileReader fileReader = getFileReaderInstance(filePath);
 			BufferedReader bufferReader = getBufferReaderInstance(fileReader);
 			Object line;
+			SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssssss");
+			int i = 0;
 			while ((line = bufferReader.readLine()) != null) {
 				try {
+					i++;
 					String myJson = line.toString().split("ERROR")[1];
 					Object simpleObj = parser.parse(myJson);
 					JSONObject parserObj = (JSONObject) simpleObj;
 					String allModelsGroup = parserObj.get("model").toString();
+					// Get date_time
+					String dateTime = parserObj.get("date_time").toString().trim().replace(" ", "T");
+					Date date = formatter.parse(dateTime);
+					System.out.println(date);
 					modelGroups.add(allModelsGroup);
-					System.out.println(parserObj);
+					a.put("date"+i, date);
+					//System.out.println(parserObj);
 				} catch (Exception e) {
 				}
 
@@ -89,11 +101,10 @@ public class TestController {
 					onlyModels.add(model.trim());
 				}
 			}
-			a.put("All_Models", allModels.size() > 50 ? "Too Many Models":allModels);
+			a.put("All_Models", allModels.size() > 50 ? "Too Many Models" : allModels);
 			a.put("Unique_Models_Group", modelGroups);
 			a.put("Unique_Models", onlyModels);
-		} catch (
-		FileNotFoundException e) {
+		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			a.put("Error", "Some Error Occured! " + e);
 			return a;
